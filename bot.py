@@ -1,10 +1,5 @@
 from pyrogram import Client
-from pyrogram.errors import (
-    FloodWait,
-    UsernameOccupied,
-    UsernameInvalid
-)
-
+from pyrogram.errors import FloodWait
 import os
 import time
 import random
@@ -15,12 +10,16 @@ SESSION = os.getenv("SESSION")
 
 GROUP_ID = os.getenv("GROUP_ID")
 
-ROTATE_EVERY = int(os.getenv("ROTATE_EVERY", 1800))
+ROTATE_EVERY = int(os.getenv("ROTATE_EVERY", 3600))
 
-USERNAMES = os.getenv("USERNAMES").split(",")
+USERNAMES = [
+    u.strip().replace("@", "").lower()
+    for u in os.getenv("USERNAMES", "").split(",")
+    if u.strip()
+]
 
 app = Client(
-    "rotator",
+    "userbot",
     api_id=API_ID,
     api_hash=API_HASH,
     session_string=SESSION
@@ -28,27 +27,37 @@ app = Client(
 
 def change_username(username):
     try:
-        app.set_chat_username(GROUP_ID, username)
+        app.set_chat_username(
+            chat_id=GROUP_ID,
+            username=username
+        )
 
         print(f"Changed to @{username}")
 
-    except UsernameOccupied:
-        print(f"{username} occupied")
-
-    except UsernameInvalid:
-        print(f"{username} invalid")
-
     except FloodWait as e:
-        print(f"FloodWait: {e.value}s")
-
+        print(f"FloodWait: sleeping {e.value}s")
         time.sleep(e.value)
 
     except Exception as e:
-        print(e)
+        print(f"Telegram says: {e}")
 
 with app:
+    print("Userbot started successfully")
+
+    try:
+        chat = app.get_chat(GROUP_ID)
+        print(f"Connected to: {chat.title}")
+
+    except Exception as e:
+        print(f"Cannot access group: {e}")
+        raise SystemExit
+
     while True:
         username = random.choice(USERNAMES)
+
+        if len(username) < 5 or len(username) > 32:
+            print(f"Skipped invalid length: {username}")
+            continue
 
         change_username(username)
 
