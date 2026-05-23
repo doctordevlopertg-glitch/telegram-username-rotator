@@ -13,7 +13,7 @@ API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 SESSION = os.getenv("SESSION")
 
-GROUP_ID = int(os.getenv("GROUP_ID"))
+GROUP_ID = os.getenv("GROUP_ID")
 
 ROTATE_EVERY = int(os.getenv("ROTATE_EVERY", 1800))
 
