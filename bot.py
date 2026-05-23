@@ -8,7 +8,7 @@ API_ID = int(os.getenv("API_ID"))
 API_HASH = os.getenv("API_HASH")
 SESSION = os.getenv("SESSION")
 
-GROUP_ID = os.getenv("GROUP_ID")
+GROUP_ID = int(os.getenv("GROUP_ID"))
 
 ROTATE_EVERY = int(os.getenv("ROTATE_EVERY", 3600))
 
@@ -25,41 +25,38 @@ app = Client(
     session_string=SESSION
 )
 
-def change_username(username):
-    try:
-        app.set_chat_username(
-            chat_id=GROUP_ID,
-            username=username
-        )
-
-        print(f"Changed to @{username}")
-
-    except FloodWait as e:
-        print(f"FloodWait: sleeping {e.value}s")
-        time.sleep(e.value)
-
-    except Exception as e:
-        print(f"Telegram says: {e}")
-
 with app:
-    print("Userbot started successfully")
+    print("Userbot started")
 
-    try:
-        chat = app.get_chat(GROUP_ID)
-        print(f"Connected to: {chat.title}")
+    # FORCE TELEGRAM TO CACHE THE CHAT
+    dialogs = list(app.get_dialogs())
 
-    except Exception as e:
-        print(f"Cannot access group: {e}")
+    found = False
+
+    for dialog in dialogs:
+        if dialog.chat.id == GROUP_ID:
+            found = True
+            print(f"Connected to: {dialog.chat.title}")
+            break
+
+    if not found:
+        print("Group not found in dialogs")
         raise SystemExit
 
     while True:
         username = random.choice(USERNAMES)
 
-        if len(username) < 5 or len(username) > 32:
-            print(f"Skipped invalid length: {username}")
-            continue
+        try:
+            app.set_chat_username(GROUP_ID, username)
 
-        change_username(username)
+            print(f"Changed to @{username}")
+
+        except FloodWait as e:
+            print(f"FloodWait: {e.value}s")
+            time.sleep(e.value)
+
+        except Exception as e:
+            print(f"Telegram says: {e}")
 
         print(f"Sleeping {ROTATE_EVERY}s")
 
